@@ -1,0 +1,32 @@
+name: Build Deb
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install Theos Dependencies
+      run: brew install ldid fakeroot make
+
+    - name: Install Theos
+      uses: actions/checkout@v2
+      with:
+        repository: theos/theos
+        path: theos
+        submodules: recursive
+
+    - name: Build Package
+      env:
+        THEOS: theos
+      run: gmake package
+      
+    - name: Upload Deb File
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        path: ${{ github.workspace }}/packages/*.deb
