@@ -107,7 +107,7 @@ SPTNowPlayingModel *nowPlayingModel;
                                                  numberOfRowsInSection:indexPath.section];
 
     if (row >= numberOfRows - 2) {
-      cell = [[UITableViewCell alloc] initWithStyle:0 reuseIdentifier:@"SubCell"];
+      cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"SubCell"];
       UISwitch *toggle = [[UISwitch alloc] initWithFrame:CGRectZero];
       cell.accessoryView = toggle;
       cell.textLabel.font = [UIFont fontWithName:@"CircularSpUI-Book" size:16.0];
