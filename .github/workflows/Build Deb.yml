@@ -4,29 +4,47 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest]
+
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
 
-    - name: Install Theos Dependencies
-      run: brew install ldid fakeroot make
+      - name: Check cache
+        run: |
+          echo upstream_heads=`git ls-remote https://github.com/theos/theos | head -n 1 | cut -f 1`-`git ls-remote https://github.com/theos/sdks | head -n 1 | cut -f 1` >> $GITHUB_ENV
+      - name: Use cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/theos
+          key: ${{ runner.os }}-${{ env.upstream_heads }}
 
-    - name: Install Theos
-      uses: actions/checkout@v2
-      with:
-        repository: theos/theos
-        path: theos
-        submodules: recursive
+      - name: Prepare Theos
+        uses: Randomblock1/theos-action@v1.3
+        with:
+          orion: "true"
 
-    - name: Build Package
-      env:
-        THEOS: theos
-      run: gmake package
-      
-    - name: Upload Deb File
-      uses: actions/upload-artifact@v3.1.1
-      with:
-        path: ${{ github.workspace }}/packages/*.deb
+      - name: Build package
+        run: |
+          rm -f packages/*
+          make package FINALPACKAGE=1
+      - name: Upload package
+        uses: actions/upload-artifact@v3
+        with:
+          name: "Package built by ${{ matrix.os }}"
+          path: ${{ github.workspace }}/packages/*-arm.deb
+
+      - name: Build rootless package
+        run: |
+          rm -f packages/*
+          make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+      - name: Upload rootless package
+        uses: actions/upload-artifact@v3
+        with:
+          name: "Rootless package built by ${{ matrix.os }}"
+          path: ${{ github.workspace }}/packages/*-arm64.deb
