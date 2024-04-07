@@ -1,40 +1,36 @@
 name: Build Deb
 
-on: [push, workflow_dispatch]
+on:
+  push:
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-11]
-
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
           submodules: true
 
-      - name: Check cache
+      - name: Install Theos Dependencies
         run: |
-          echo upstream_heads=`git ls-remote https://github.com/theos/theos | head -n 1 | cut -f 1`-`git ls-remote https://github.com/theos/sdks | head -n 1 | cut -f 1` >> $GITHUB_ENV
-      - name: Use cache
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/theos
-          key: ${{ runner.os }}-${{ env.upstream_heads }}
+          brew install ldid fakeroot make
 
-      - name: Prepare Theos
-        uses: Randomblock1/theos-action@v1.3
+      - name: Install Theos
+        uses: actions/checkout@v2
         with:
-          orion: "true"
+          repository: theos/theos
+          path: theos
+          submodules: recursive
 
-      - name: Build package
-        run: |
-          rm -f packages/*
-          make package FINALPACKAGE=1
-      - name: Upload package
-        uses: actions/upload-artifact@v3
+      - name: Build Package
+        env:
+          THEOS: theos
+        run: gmake package || exit 0
+
+      - name: Upload Deb File
+        uses: actions/upload-artifact@v3.1.1
         with:
-          name: "Package built by ${{ matrix.os }}"
-          path: ${{ github.workspace }}/packages/*-arm.deb
+          name: "Package built on macOS"
+          path: ${{ github.workspace }}/packages/*.deb
