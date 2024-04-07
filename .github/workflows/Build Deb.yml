@@ -9,7 +9,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v3
         with:
           submodules: true
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -19,19 +19,30 @@ jobs:
           brew install ldid fakeroot make
 
       - name: Install Theos
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v3
         with:
           repository: theos/theos
           path: theos
           submodules: recursive
 
-      - name: Build Package
+      - name: Build Rooted Package
         env:
           THEOS: theos
-        run: gmake package || exit 0
+        run: make package FINALPACKAGE=1 || exit 0
 
-      - name: Upload Deb File
+      - name: Upload Rooted Deb File
         uses: actions/upload-artifact@v4.3.1
         with:
-          name: "Package built on macOS"
+          name: "Rooted package built on macOS"
+          path: ${{ github.workspace }}/packages/*.deb
+
+      - name: Build Rootless Package
+        env:
+          THEOS: theos
+        run: make package || exit 0
+
+      - name: Upload Rootless Deb File
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: "Rootless package built on macOS"
           path: ${{ github.workspace }}/packages/*.deb
