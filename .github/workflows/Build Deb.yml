@@ -18,7 +18,7 @@ jobs:
           brew install ldid fakeroot make
 
       - name: Install Theos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: theos/theos
           path: theos
@@ -30,7 +30,7 @@ jobs:
         run: gmake package || exit 0
 
       - name: Upload Deb File
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.2.1
         with:
           name: "Package built on macOS"
           path: ${{ github.workspace }}/packages/*.deb
